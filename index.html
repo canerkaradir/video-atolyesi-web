@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Atölyesi</title>
+<style>
+/* VOICE: sade, iş gören bir el aleti; az söz, büyük düğmeler.
+   IDEA: montaj masası — film şeridi, makas izi, zaman çizelgesi.
+   PICTURE: ana ekranda büyük işlem kartları; kesmede zaman çizelgesi aracın kendisi.
+   COLOUR and TYPE: beyaz zemin, koyu mürekkep, kesik kırmızısı vurgu, ses için deniz yeşili; sistem yazı tipi.
+   LAYOUT: tek sütun, telefona göre; geniş ekranda ortada 720px. */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#121216);--yuzey:light-dark(#f3f3f6,#1d1d23);--cizgi:light-dark(#e2e2e8,#2c2c35);
+--ink:light-dark(#16161d,#f2f2f5);--soluk:light-dark(#5d5d6b,#a6a6b4);
+--vurgu:#e5383b;--vurgu-koyu:#c22528;--ses:#0e7c86;--uyari:light-dark(#fff4e5,#2e2414);}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip}
+main{max-width:720px;margin:0 auto;padding:16px 16px 48px}
+h1{font-size:32px;line-height:1.05;margin:8px 0 4px;letter-spacing:-.01em}
+h2{font-size:24px;line-height:1.15;margin:0}
+p{margin:.4em 0}
+.alt{color:var(--soluk);font-size:15px}
+.serit{height:14px;margin:6px 0 18px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--ink) 0 10px,transparent 10px 16px);opacity:.85;mask:linear-gradient(90deg,#000 0 38%,transparent 38% 42%,#000 42%)}
+.kartlar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kart{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:18px 16px;border-radius:18px;background:var(--yuzey);border:1px solid var(--cizgi);min-height:132px;transition:transform .12s}
+.kart:active{transform:scale(.98)}
+.kart:focus-visible{outline:3px solid var(--vurgu);outline-offset:2px}
+.kart.buyuk{grid-column:1/-1;background:var(--vurgu);color:#fff;border-color:transparent;min-height:120px}
+.kart.buyuk .alt{color:#ffe1e1}
+.kart.ses .ikon{background:var(--ses)}
+.kart b{font-size:19px;line-height:1.2}
+.kart .alt{font-size:14px;line-height:1.35}
+.ikon{width:44px;height:44px;border-radius:12px;background:var(--vurgu);display:grid;place-items:center;flex:none}
+.kart.buyuk .ikon{background:#fff3}
+.ikon svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ust{display:flex;align-items:center;gap:10px;margin:4px 0 16px}
+.geri{all:unset;cursor:pointer;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--yuzey);flex:none}
+.geri svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.4}
+.geri:focus-visible,.dugme:focus-visible{outline:3px solid var(--vurgu);outline-offset:2px}
+.dugme{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:12px 20px;border-radius:14px;background:var(--vurgu);color:#fff;font-weight:650;font-size:17px;text-align:center}
+.dugme:active{background:var(--vurgu-koyu)}
+.dugme.tam{width:100%}
+.dugme.ikinci{background:var(--yuzey);color:var(--ink);border:1px solid var(--cizgi)}
+.dugme.sesrenk{background:var(--ses)}
+.dugme[disabled]{opacity:.45;pointer-events:none}
+.ekle{border:2px dashed var(--cizgi);background:transparent;color:var(--ink);width:100%;min-height:72px}
+.liste{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
+.liste li{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:14px;background:var(--yuzey)}
+.liste .no{font-weight:700;color:var(--vurgu);width:1.4em;flex:none}
+.liste .ad{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.liste .ad small{display:block;color:var(--soluk);font-size:13px}
+.kucuk{all:unset;cursor:pointer;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--bg);flex:none}
+.kucuk svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.kucuk:focus-visible{outline:2px solid var(--vurgu)}
+.oynatici{width:100%;max-height:52vh;border-radius:14px;background:#000;display:block}
+audio.oynatici{background:transparent;max-height:none}
+.cizelge{position:relative;height:56px;margin:18px 6px 4px;touch-action:none}
+.cizelge .zemin{position:absolute;inset:14px 0;border-radius:8px;background:repeating-linear-gradient(90deg,var(--cizgi) 0 6px,var(--yuzey) 6px 12px)}
+.cizelge .secim{position:absolute;top:14px;bottom:14px;background:color-mix(in srgb,var(--vurgu) 35%,transparent);border-top:3px solid var(--vurgu);border-bottom:3px solid var(--vurgu)}
+.cizelge.at .secim{background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--vurgu) 45%,transparent) 0 6px,transparent 6px 12px)}
+.cizelge .imlec{position:absolute;top:6px;bottom:6px;width:2px;background:var(--ink);transform:translateX(-1px);pointer-events:none}
+.tutamak{position:absolute;top:0;width:28px;height:56px;margin-left:-14px;border-radius:9px;background:var(--vurgu);cursor:ew-resize;display:grid;place-items:center;touch-action:none}
+.tutamak::after{content:"";width:4px;height:22px;border-radius:2px;background:#fff8}
+.tutamak:focus-visible{outline:3px solid var(--ink)}
+.zamanlar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.zaman{background:var(--yuzey);border-radius:14px;padding:10px 12px}
+.zaman .etiket{font-size:13px;color:var(--soluk)}
+.zaman .deger{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.zaman .satir{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:6px}
+.zaman .satir button{all:unset;cursor:pointer;min-height:44px;padding:0 2px;white-space:nowrap;border-radius:10px;background:var(--bg);font-size:14px;font-weight:600;display:grid;place-items:center}
+.zaman .satir button:focus-visible{outline:2px solid var(--vurgu)}
+.sec{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.sec label{flex:1 1 260px;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--yuzey);border:2px solid transparent;cursor:pointer;font-size:15px;line-height:1.35}
+.sec label:has(input:checked){border-color:var(--vurgu)}
+.sec input{accent-color:var(--vurgu);width:20px;height:20px;margin:0;flex:none}
+.sec b{display:block;font-size:16px}
+.bicimler{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:8px 0 16px}
+.bicimler button{all:unset;cursor:pointer;min-height:56px;border-radius:14px;background:var(--yuzey);border:2px solid transparent;display:grid;place-items:center;font-weight:700;font-size:17px}
+.bicimler button[aria-pressed=true]{border-color:var(--vurgu);background:color-mix(in srgb,var(--vurgu) 12%,var(--yuzey))}
+.bicimler.sesli button[aria-pressed=true]{border-color:var(--ses);background:color-mix(in srgb,var(--ses) 14%,var(--yuzey))}
+.bicimler button:focus-visible{outline:2px solid var(--vurgu)}
+.baslik3{font-size:15px;font-weight:650;color:var(--soluk);margin:14px 0 2px}
+.not{background:var(--uyari);border-radius:12px;padding:10px 12px;font-size:15px;margin:12px 0}
+.bos{color:var(--soluk);text-align:center;padding:12px 0;font-size:15px}
+.dosya-adi{font-weight:650;margin:10px 0 4px;overflow-wrap:anywhere}
+.katman{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 92%,transparent);display:none;place-items:center;z-index:9;padding:24px;backdrop-filter:blur(4px)}
+.katman.acik{display:grid}
+.isleniyor{width:min(420px,100%);text-align:center}
+.cubuk{height:14px;border-radius:7px;background:var(--yuzey);overflow:hidden;margin:18px 0 8px;border:1px solid var(--cizgi)}
+.cubuk i{display:block;height:100%;width:0;background:var(--vurgu);transition:width .3s}
+.cubuk.belirsiz i{width:35%;animation:kay 1.2s ease-in-out infinite}
+@keyframes kay{from{margin-left:-35%}to{margin-left:100%}}
+@media (prefers-reduced-motion:reduce){.cubuk.belirsiz i{animation:none;width:100%;opacity:.4}.kart{transition:none}}
+.yuzde{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums}
+.sonuc-bilgi{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.rozet{background:var(--yuzey);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;white-space:nowrap}
+.dugmeler{display:grid;gap:10px;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:15px;z-index:10;max-width:90vw;display:none}
+.toast.acik{display:block}
+.hata-detay{font-size:12px;white-space:pre-wrap;max-height:30vh;overflow:auto;background:var(--yuzey);padding:8px;border-radius:8px;text-align:left}
+[hidden]{display:none!important}
+@media(max-width:360px){.kartlar{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<main>
+
+<section data-ekran="ana">
+  <h1>Video Atölyesi</h1>
+  <p class="alt">Kes, birleştir, biçim değiştir. Dosyalar cihazından çıkmaz.</p>
+  <div class="serit" aria-hidden="true"></div>
+  <div class="kartlar">
+    <button class="kart buyuk" data-git="birlestir">
+      <span class="ikon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="8" height="12" rx="2"/><rect x="14" y="6" width="8" height="12" rx="2"/><path d="M10 12h4"/></svg></span>
+      <b>Video birleştir</b><span class="alt">İki ya da daha fazla videoyu tek video yap</span>
+    </button>
+    <button class="kart buyuk" data-git="kes">
+      <span class="ikon"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.1 8.1 20 20M8.1 15.9 20 4"/></svg></span>
+      <b>Video kes</b><span class="alt">İstediğin kısmı al ya da çıkar</span>
+    </button>
+    <button class="kart" data-git="format">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg></span>
+      <b>Biçim değiştir</b><span class="alt">MP4 → 3GP, videodan MP3…</span>
+    </button>
+    <button class="kart ses" data-git="sesbirlestir">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></span>
+      <b>Ses birleştir</b><span class="alt">Ses dosyalarını arka arkaya ekle</span>
+    </button>
+    <button class="kart ses" data-git="seskes">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/></svg></span>
+      <b>Ses kes</b><span class="alt">Şarkıdan, kayıttan parça al</span>
+    </button>
+    <div class="kart" style="cursor:default" aria-hidden="true">
+      <span class="ikon" style="background:var(--soluk)"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+      <b>İnternet gerekmez</b><span class="alt">İşlem telefonda/tarayıcıda yapılır</span>
+    </div>
+  </div>
+  <p class="alt" id="motorDurum" style="margin-top:16px">Motor hazırlanıyor…</p>
+</section>
+
+<section data-ekran="birlestir" hidden>
+  <div class="ust"><button class="geri" data-git="ana" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Video birleştir</h2></div>
+  <p class="alt">Videoları sırayla ekle. Sırayı oklarla değiştirebilirsin.</p>
+  <ul class="liste" id="bListe"></ul>
+  <button class="dugme ekle" id="bEkle">+ Video ekle</button>
+  <div class="not" id="bNot" hidden></div>
+  <div class="dugmeler"><button class="dugme tam" id="bBasla" disabled>Birleştir</button></div>
+</section>
+
+<section data-ekran="kes" hidden>
+  <div class="ust"><button class="geri" data-git="ana" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Video kes</h2></div>
+  <div data-kesici="video"></div>
+</section>
+
+<section data-ekran="seskes" hidden>
+  <div class="ust"><button class="geri" data-git="ana" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Ses kes</h2></div>
+  <div data-kesici="ses"></div>
+</section>
+
+<section data-ekran="format" hidden>
+  <div class="ust"><button class="geri" data-git="ana" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Biçim değiştir</h2></div>
+  <button class="dugme ekle" id="fSec">+ Dosya seç (video ya da ses)</button>
+  <p class="dosya-adi" id="fAd" hidden></p>
+  <div id="fSecenek" hidden>
+    <p class="baslik3">Video olarak</p>
+    <div class="bicimler" id="fVideo"></div>
+    <p class="baslik3">Yalnızca ses olarak</p>
+    <div class="bicimler sesli" id="fSes"></div>
+    <div class="not" id="fNot" hidden></div>
+    <button class="dugme tam" id="fBasla" disabled>Dönüştür</button>
+  </div>
+</section>
+
+<section data-ekran="sesbirlestir" hidden>
+  <div class="ust"><button class="geri" data-git="ana" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Ses birleştir</h2></div>
+  <p class="alt">Ses dosyalarını (ya da videoların sesini) sırayla ekle.</p>
+  <ul class="liste" id="sListe"></ul>
+  <button class="dugme ekle" id="sEkle">+ Ses ekle</button>
+  <p class="baslik3">Çıkacak biçim</p>
+  <div class="bicimler sesli" id="sBicim"></div>
+  <div class="dugmeler"><button class="dugme tam sesrenk" id="sBasla" disabled>Birleştir</button></div>
+</section>
+
+<section data-ekran="sonuc" hidden>
+  <div class="ust"><button class="geri" data-git="ana" aria-label="Ana ekran"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Hazır</h2></div>
+  <div id="rOynatici"></div>
+  <div class="sonuc-bilgi" id="rBilgi"></div>
+  <div class="not" id="rNot" hidden></div>
+  <div class="dugmeler">
+    <button class="dugme tam" id="rKaydet">Kaydet</button>
+    <button class="dugme tam ikinci" id="rTekrar">Aynı ekrana dön</button>
+    <button class="dugme tam ikinci" data-git="ana">Ana ekran</button>
+  </div>
+</section>
+
+</main>
+
+<div class="katman" id="katman" role="dialog" aria-modal="true" aria-live="polite">
+  <div class="isleniyor">
+    <h2 id="kBaslik">İşleniyor…</h2>
+    <div class="cubuk belirsiz" id="kCubuk"><i></i></div>
+    <div class="yuzde" id="kYuzde">&nbsp;</div>
+    <p class="alt" id="kAlt">Uygulamayı kapatma. Uzun videolar birkaç dakika sürebilir.</p>
+    <div id="kHata" hidden></div>
+    <div class="dugmeler"><button class="dugme tam ikinci" id="kIptal">İptal</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="dosyaGirdi" hidden>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
